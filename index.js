@@ -4,6 +4,7 @@ let issue = {};
 let issues = [];
 let issue_text = document.getElementById("issue-text");
 const issues_cardBody = document.getElementById("issues-card-body");
+const container_cardBody = document.getElementById("container-card-body");
 
 fetch_issues();
 
@@ -70,8 +71,8 @@ return String(issue_id);
 function fetch_issues(){
 
     let issues = JSON.parse(localStorage.getItem("issue"));
-
-    if(issues){
+    console.log(issues.length)
+    if(issues.length > 0){
         
 
         for(let i=0; i<issues.length; i++){
@@ -93,8 +94,8 @@ function fetch_issues(){
                     <i class="bi bi-person-fill"></i>${issues[i].issue_assign}
                 </p>    
             </div>
-            <button class="btn btn-warning"  >close</button>
-            <button class="btn btn-danger" onclick="">delete</button>
+            <button class="btn btn-warning" onclick="updateIssue('${issues[i].issue_id}')">Update</button>
+            <button class="btn btn-danger" onclick="deleteIssues('${issues[i].issue_id}')">Delete</button>
             <hr>
             `
             ;
@@ -107,9 +108,64 @@ function fetch_issues(){
     }
 }
 
+function updateIssue(i){
+    
+        let fetched_issues = JSON.parse(localStorage.getItem("issue"));
 
-// function deleteIssue(i){
-//     issues.pop(issues[i]);
+        let update_obj = fetched_issues.find((obj) => obj.issue_id === i)
+
+        if(update_obj){
+            container_cardBody.innerHTML =  `
+            <div class="alert alert-primary" id="addIssue-header">Updating issue: ${update_obj.issue_id}</div>
+            <div class="card-body" >
+                <form>
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <input type="text" id="description" class="form-control" required value=${update_obj.issue_description}>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="priority">Priority</label>
+                        <select id="priority" class="form-control" required>
+                            <option value="Low" ${update_obj.issue_priority==='Low'? 'selected':''}>Low</option>
+                            <option value="Medium" ${update_obj.issue_priority==='Medium'? 'selected':''}>Medium</option>
+                            <option value="High" ${update_obj.issue_priority==='High'? 'selected':''}>High</option>
+                        </select> 
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="assigned-to">Assigned to:</label>
+                        <input type="text" id="assigned-to" class="form-control" required value=${update_obj.issue_assign}>
+                    </div>
+
+                    <button type="submit" class="btn btn-success" id="issue-click">update issue</button>
+                </form>
+            </div>
+        `;
+        }
+}
 
 
-// }
+function deleteIssues(i){
+    if(confirm("Are you sure you want to delete the issue?")){
+
+        let fetched_issues = JSON.parse(localStorage.getItem("issue"));
+
+        let index_pop = fetched_issues.findIndex((obj) => obj.issue_id === i)
+        fetched_issues.splice(index_pop, 1)
+        localStorage.setItem("issue", JSON.stringify(fetched_issues));
+    
+        if(localStorage.hasOwnProperty("issue")){
+                addIssue_header.innerHTML = "The issue was deleted successfully";
+                issues_cardBody.innerHTML = " ";
+                addIssue_header.className = "alert alert-success"
+                fetch_issues();
+        }else{
+                addIssue_header.innerHTML = "There was an error in deleting the issue";
+                addIssue_header.className = "alert alert-danger"
+        }
+    }
+}
+
+
+//create empty localstorage array on start then modify to push entries to array
