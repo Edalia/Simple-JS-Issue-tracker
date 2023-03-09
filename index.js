@@ -8,46 +8,7 @@ const container_cardBody = document.getElementById("container-card-body");
 
 fetch_issues();
 
-issue_click.addEventListener('click', function(e){
 
-    e.preventDefault();
-
-    const description = document.getElementById('description').value;
-    const priority = document.getElementById('priority').value;
-    const assigned_to = document.getElementById('assigned-to').value;
-
-    if(description && priority && assigned_to){
-        issue = {
-            issue_id: generate_issueID(),
-            issue_description:description,
-            issue_priority: priority,
-            issue_assign: assigned_to
-        };
-    
-        issues.push(issue)
-
-        // Store the object into storage
-        localStorage.setItem("issue", JSON.stringify(issues));
-     
-        if(localStorage.hasOwnProperty("issue")){
-            addIssue_header.innerHTML = "The issue was added successfully";
-            issues_cardBody.innerHTML = " ";
-            addIssue_header.className = "alert alert-success"
-            fetch_issues();
-
-            
-        }else{
-            addIssue_header.innerHTML = "There was an error in recording the issue";
-            addIssue_header.className = "alert alert-danger"
-        }
-    
-        console.log(issues);
-    }else{
-        addIssue_header.innerHTML = "A field was left blank";
-        addIssue_header.className = "alert alert-danger"
-    }
-
-})
 
 //issue ID generator
 function generate_issueID(){
@@ -68,11 +29,66 @@ return String(issue_id);
 }
 
 
+function insert_issue(event){
+    event.preventDefault();
+
+    const description = document.getElementById('description').value;
+    const priority = document.getElementById('priority').value;
+    const assigned_to = document.getElementById('assigned-to').value;
+
+    if(description && priority && assigned_to){
+        issue = {
+            issue_id: generate_issueID(),
+            issue_description:description,
+            issue_priority: priority,
+            issue_assign: assigned_to
+        };
+    
+        
+        //storage was set prior to new issue being added - prevent previous issues from being overidden
+        if(localStorage.hasOwnProperty("issue")){
+
+            //consider previous issues
+            issues = JSON.parse(localStorage.getItem("issue"));
+
+            issues.push(issue)
+            
+            // Store the object into storage
+            localStorage.setItem("issue", JSON.stringify(issues));
+     
+
+            addIssue_header.innerHTML = "The issue was added successfully";
+            issues_cardBody.innerHTML = " ";
+            addIssue_header.className = "alert alert-success"
+            fetch_issues();
+
+            
+        }else{
+
+            issues.push(issue)
+            
+            // Store the object into storage
+            localStorage.setItem("issue", JSON.stringify(issues));
+
+            addIssue_header.innerHTML = "The issue was added successfully";
+            issues_cardBody.innerHTML = " ";
+            addIssue_header.className = "alert alert-success"
+            fetch_issues();
+
+        }
+    
+        console.log(issues);
+    }else{
+        addIssue_header.innerHTML = "A field was left blank";
+        addIssue_header.className = "alert alert-danger"
+    }
+}
+
 function fetch_issues(){
 
     let issues = JSON.parse(localStorage.getItem("issue"));
-    console.log(issues.length)
-    if(issues.length > 0){
+    
+    if(issues!=null && issues.length > 0){
         
 
         for(let i=0; i<issues.length; i++){
@@ -94,8 +110,8 @@ function fetch_issues(){
                     <i class="bi bi-person-fill"></i>${issues[i].issue_assign}
                 </p>    
             </div>
-            <button class="btn btn-warning" onclick="updateIssue('${issues[i].issue_id}')">Update</button>
-            <button class="btn btn-danger" onclick="deleteIssues('${issues[i].issue_id}')">Delete</button>
+            <button class="btn btn-warning" onclick="update_issue('${issues[i].issue_id}',event)">Update</button>
+            <button class="btn btn-danger" onclick="delete_issue('${issues[i].issue_id}')">Delete</button>
             <hr>
             `
             ;
@@ -108,8 +124,9 @@ function fetch_issues(){
     }
 }
 
-function updateIssue(i){
-    
+function update_issue(i, event){
+
+        event.preventDefault();
         let fetched_issues = JSON.parse(localStorage.getItem("issue"));
 
         let update_obj = fetched_issues.find((obj) => obj.issue_id === i)
@@ -138,21 +155,39 @@ function updateIssue(i){
                         <input type="text" id="assigned-to" class="form-control" required value=${update_obj.issue_assign}>
                     </div>
 
-                    <button type="submit" class="btn btn-success" id="issue-click">update issue</button>
+                    <button type="submit" class="btn btn-success" onclick="update_issue_record('${update_obj.issue_id}', event)">Update issue</button>
                 </form>
             </div>
         `;
         }
 }
 
+function update_issue_record(id, event){
+    event.preventDefault();
+    issues = JSON.parse(localStorage.getItem("issue"));
 
-function deleteIssues(i){
+    let update_issue_obj = issues.find((obj) => obj.issue_id === id);
+
+    update_issue_obj.issue_description = "Update: "+document.getElementById('description').value;
+    update_issue_obj.issue_priority = document.getElementById('priority').value;
+    update_issue_obj.issue_assign = "Update: "+document.getElementById('assigned-to').value;
+
+    console.log(update_issue_obj)
+
+}
+
+function delete_issue(i){
     if(confirm("Are you sure you want to delete the issue?")){
 
         let fetched_issues = JSON.parse(localStorage.getItem("issue"));
-
+        
+        //Get index of the issue to be deleted -> issue_id == i
         let index_pop = fetched_issues.findIndex((obj) => obj.issue_id === i)
+
+        //At the index of the isssue, remove 1 item
         fetched_issues.splice(index_pop, 1)
+
+        //Save localstorage key+values using new array 
         localStorage.setItem("issue", JSON.stringify(fetched_issues));
     
         if(localStorage.hasOwnProperty("issue")){
@@ -166,6 +201,3 @@ function deleteIssues(i){
         }
     }
 }
-
-
-//create empty localstorage array on start then modify to push entries to array
