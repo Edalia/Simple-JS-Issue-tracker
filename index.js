@@ -29,8 +29,8 @@ return String(issue_id);
 }
 
 
-function insert_issue(){
-
+function insert_issue(event){
+    event.preventDefault();
     const description = document.getElementById('description').value;
     const priority = document.getElementById('priority').value;
     const assigned_to = document.getElementById('assigned-to').value;
@@ -40,6 +40,7 @@ function insert_issue(){
             issue_id: generate_issueID(),
             issue_description:description,
             issue_priority: priority,
+            issue_isUpdated:false,
             issue_assign: assigned_to
         };
     
@@ -78,6 +79,11 @@ function insert_issue(){
         addIssue_header.innerHTML = "A field was left blank";
         addIssue_header.className = "alert alert-danger"
     }
+
+    $(document).ready(function () {
+        setTimeout(function () { location.reload(true);}, 2000);
+      });
+
 }
 
 function fetch_issues(){
@@ -91,7 +97,7 @@ function fetch_issues(){
             issues_cardBody.innerHTML +=  `                    
     
             <div class="row">
-                <p> Issue id: ${issues[i].issue_id}</p>
+                <p> Issue id: ${issues[i].issue_id + ((issues[i].issue_isUpdated? `<b> (updated)</b>`:""))}</p>
             </div>
             <div>
                 <b><p id="issue-text">${issues[i].issue_description}</p></b>
@@ -124,7 +130,6 @@ function update_issue(i, event){
 
         event.preventDefault();
 
-
         let fetched_issues = JSON.parse(localStorage.getItem("issue"));
 
         let update_obj = fetched_issues.find((obj) => obj.issue_id === i)
@@ -137,7 +142,7 @@ function update_issue(i, event){
                 <form>
                     <div class="form-group">
                         <label for="description">Description</label>
-                        <input type="text" id="description" class="form-control" required value=${update_obj.issue_description}>
+                        <input type="text" id="description" class="form-control" required value='${(update_obj.issue_description)}'>
                     </div>
                     
                     <div class="form-group">
@@ -151,26 +156,33 @@ function update_issue(i, event){
                     
                     <div class="form-group">
                         <label for="assigned-to">Assigned to:</label>
-                        <input type="text" id="assigned-to" class="form-control" required value=${update_obj.issue_assign}>
+                        <input type="text" id="assigned-to" class="form-control" required value='${update_obj.issue_assign}'>
                     </div>
 
                     <button type="submit" class="btn btn-success" onclick="update_issue_record('${update_obj.issue_id}', event)">Update issue</button>
                 </form>
         `;
         }
+
+        console.log(update_obj)
 }
 
 function update_issue_record(id, event){
     event.preventDefault();
     issues = JSON.parse(localStorage.getItem("issue"));
 
+    //fetch object details from localstorage array
     let update_issue_obj = issues.find((obj) => obj.issue_id === id);
+
+    //fetch the object's index
     let issue_obj_index = issues.findIndex((obj) => obj.issue_id === id)
 
+    //update new issue object to be stored
     update_issue_obj.issue_id = id;
-    update_issue_obj.issue_description = document.getElementById('description').value + " (updated)";
+    update_issue_obj.issue_description = document.getElementById('description').value;
     update_issue_obj.issue_priority = document.getElementById('priority').value;
     update_issue_obj.issue_assign = document.getElementById('assigned-to').value;
+    update_issue_obj.issue_isUpdated = true;
 
     //replace obj at index with new updated object
     issues.splice(issue_obj_index, 1, update_issue_obj)
@@ -181,8 +193,11 @@ function update_issue_record(id, event){
     addIssue_header.innerHTML = `Issue: ${update_issue_obj.issue_id} was updated successfully!`;
     addIssue_header.className = "alert alert-success"
     fetch_issues();
-    console.log(update_issue_obj)
-
+    
+    //reload page after execution
+    $(document).ready(function () {
+        setTimeout(function () { location.reload(true);}, 2000);
+      });
 }
 
 function delete_issue(i){
