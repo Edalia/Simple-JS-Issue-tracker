@@ -4,7 +4,7 @@ let issue = {};
 let issues = [];
 let issue_text = document.getElementById("issue-text");
 const issues_cardBody = document.getElementById("issues-card-body");
-const container_cardBody = document.getElementById("container-card-body");
+const form_cardBody = document.getElementById("form-card-body");
 
 fetch_issues();
 
@@ -29,8 +29,7 @@ return String(issue_id);
 }
 
 
-function insert_issue(event){
-    event.preventDefault();
+function insert_issue(){
 
     const description = document.getElementById('description').value;
     const priority = document.getElementById('priority').value;
@@ -58,7 +57,6 @@ function insert_issue(event){
      
 
             addIssue_header.innerHTML = "The issue was added successfully";
-            issues_cardBody.innerHTML = " ";
             addIssue_header.className = "alert alert-success"
             fetch_issues();
 
@@ -71,10 +69,8 @@ function insert_issue(event){
             localStorage.setItem("issue", JSON.stringify(issues));
 
             addIssue_header.innerHTML = "The issue was added successfully";
-            issues_cardBody.innerHTML = " ";
             addIssue_header.className = "alert alert-success"
             fetch_issues();
-
         }
     
         console.log(issues);
@@ -89,7 +85,7 @@ function fetch_issues(){
     let issues = JSON.parse(localStorage.getItem("issue"));
     
     if(issues!=null && issues.length > 0){
-        
+        issues_cardBody.innerHTML = " ";
 
         for(let i=0; i<issues.length; i++){
             issues_cardBody.innerHTML +=  `                    
@@ -127,14 +123,17 @@ function fetch_issues(){
 function update_issue(i, event){
 
         event.preventDefault();
+
+
         let fetched_issues = JSON.parse(localStorage.getItem("issue"));
 
         let update_obj = fetched_issues.find((obj) => obj.issue_id === i)
 
+        addIssue_header.innerHTML = `Updating issue: ${update_obj.issue_id}`;
+        addIssue_header.className = "alert alert-primary"
+
         if(update_obj){
-            container_cardBody.innerHTML =  `
-            <div class="alert alert-primary" id="addIssue-header">Updating issue: ${update_obj.issue_id}</div>
-            <div class="card-body" >
+            form_cardBody.innerHTML =  `
                 <form>
                     <div class="form-group">
                         <label for="description">Description</label>
@@ -157,7 +156,6 @@ function update_issue(i, event){
 
                     <button type="submit" class="btn btn-success" onclick="update_issue_record('${update_obj.issue_id}', event)">Update issue</button>
                 </form>
-            </div>
         `;
         }
 }
@@ -167,11 +165,22 @@ function update_issue_record(id, event){
     issues = JSON.parse(localStorage.getItem("issue"));
 
     let update_issue_obj = issues.find((obj) => obj.issue_id === id);
+    let issue_obj_index = issues.findIndex((obj) => obj.issue_id === id)
 
-    update_issue_obj.issue_description = "Update: "+document.getElementById('description').value;
+    update_issue_obj.issue_id = id;
+    update_issue_obj.issue_description = document.getElementById('description').value + " (updated)";
     update_issue_obj.issue_priority = document.getElementById('priority').value;
-    update_issue_obj.issue_assign = "Update: "+document.getElementById('assigned-to').value;
+    update_issue_obj.issue_assign = document.getElementById('assigned-to').value;
 
+    //replace obj at index with new updated object
+    issues.splice(issue_obj_index, 1, update_issue_obj)
+
+    //store new array to localstorage 
+    localStorage.setItem("issue", JSON.stringify(issues));
+
+    addIssue_header.innerHTML = `Issue: ${update_issue_obj.issue_id} was updated successfully!`;
+    addIssue_header.className = "alert alert-success"
+    fetch_issues();
     console.log(update_issue_obj)
 
 }
@@ -192,7 +201,6 @@ function delete_issue(i){
     
         if(localStorage.hasOwnProperty("issue")){
                 addIssue_header.innerHTML = "The issue was deleted successfully";
-                issues_cardBody.innerHTML = " ";
                 addIssue_header.className = "alert alert-success"
                 fetch_issues();
         }else{
